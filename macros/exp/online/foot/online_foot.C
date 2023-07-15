@@ -1,142 +1,151 @@
-typedef struct EXT_STR_h101_t
-{
-    EXT_STR_h101_unpack_t unpack;
-    EXT_STR_h101_TPAT_t unpacktpat;
-    EXT_STR_h101_WRMASTER_t wrmaster;
-    EXT_STR_h101_FOOT_onion_t foot;
+typedef struct EXT_STR_h101_t {
+  EXT_STR_h101_unpack_t unpack;
+  EXT_STR_h101_TPAT_t unpacktpat;
+  EXT_STR_h101_WRMASTER_t wrmaster;
+  EXT_STR_h101_FOOT_onion_t foot;
 } EXT_STR_h101;
 
-void online_foot(const Int_t nev = -1)
-{
-    TStopwatch timer;
-    timer.Start();
+void online_foot(const Int_t nev = -1) {
+  TStopwatch timer;
+  timer.Start();
 
-    FairLogger::GetLogger()->SetLogScreenLevel("info");
-    FairLogger::GetLogger()->SetColoredLog(true);
+  FairLogger::GetLogger()->SetLogScreenLevel("info");
+  FairLogger::GetLogger()->SetColoredLog(true);
 
-    auto t = std::time(nullptr);
-    auto tm = *std::localtime(&t);
-    std::ostringstream oss;
-    oss << std::put_time(&tm, "%Y%m%d_%H%M%S");
+  auto t = std::time(nullptr);
+  auto tm = *std::localtime(&t);
+  std::ostringstream oss;
+  oss << std::put_time(&tm, "%Y%m%d_%H%M%S");
 
-    //TString filename = "--stream=krpc003:9003";
-    TString filename = "~/lmd/julich2023/run003.lmd";
-    TString outputpath = "./";
-    TString outputFileName = outputpath + "foot_analysis_" + oss.str() + ".root";
+  // TString filename = "--stream=krpc003:9003";
+  TString filename = "~/lmd/julich2023/run003.lmd";
+  TString outputpath = "./";
+  TString outputFileName = outputpath + "foot_analysis_" + oss.str() + ".root";
 
-    Bool_t Cal_level = true;         // set true if there exists a file with the calibration parameters
-    Bool_t NOTstoremappeddata = false; // if true, don't store mapped data in the root file
-    Bool_t NOTstorecaldata = false;    // if true, don't store cal data in the root file
-    Bool_t NOTstorehitdata = false;    // if true, don't store hit data in the root file
+  Bool_t Cal_level =
+      true; // set true if there exists a file with the calibration parameters
+  Bool_t NOTstoremappeddata =
+      false; // if true, don't store mapped data in the root file
+  Bool_t NOTstorecaldata =
+      false; // if true, don't store cal data in the root file
+  Bool_t NOTstorehitdata =
+      false; // if true, don't store hit data in the root file
 
-    // Online server configuration --------------------------
-    Int_t refresh = 10; // Refresh rate for online histograms
-    Int_t port = 8886; // Port number for the online visualization, example lxgXXXX:8886
-    TString dir = gSystem->Getenv("VMCWORKDIR");
+  // Online server configuration --------------------------
+  Int_t refresh = 10; // Refresh rate for online histograms
+  Int_t port =
+      8886; // Port number for the online visualization, example lxgXXXX:8886
+  TString dir = gSystem->Getenv("VMCWORKDIR");
 
-    // FOOT parameter file
-    TString footparfilename = "../../../../foot/foot_CalPar_20230715.par";
-    footparfilename.ReplaceAll("//", "/");
+  // FOOT parameter file
+  TString footparfilename = "../../../../foot/foot_CalPar_20230715_0V.par";
+  footparfilename.ReplaceAll("//", "/");
 
-    //TString ntuple_options = "RAW,time-stitch=1000";
-    TString ntuple_options = "RAW";
-    TString ucesb_dir = getenv("UCESB_DIR");
-    TString upexps_dir = ucesb_dir + "/../upexps/";
-    TString ucesb_path;
-    ucesb_path = upexps_dir + "/202307_juelich/202307_juelich --allow-errors";
-    ucesb_path.ReplaceAll("//", "/");
+  // TString ntuple_options = "RAW,time-stitch=1000";
+  TString ntuple_options = "RAW";
+  TString ucesb_dir = getenv("UCESB_DIR");
+  TString upexps_dir = ucesb_dir + "/../upexps/";
+  TString ucesb_path;
+  ucesb_path = upexps_dir + "/202307_juelich/202307_juelich --allow-errors";
+  ucesb_path.ReplaceAll("//", "/");
 
-    // Load ucesb structure ---------------------------------
-    EXT_STR_h101 ucesb_struct;
+  // Load ucesb structure ---------------------------------
+  EXT_STR_h101 ucesb_struct;
 
-    // Create online run ------------------------------------
-    FairRunOnline* run = new FairRunOnline();
-    R3BEventHeader* EvntHeader = new R3BEventHeader();
-    run->SetEventHeader(EvntHeader);
-    run->SetRunId(1);
-    run->SetSink(new FairRootFileSink(outputFileName));
-    run->ActivateHttpServer(refresh, port);
+  // Create online run ------------------------------------
+  FairRunOnline *run = new FairRunOnline();
+  R3BEventHeader *EvntHeader = new R3BEventHeader();
+  run->SetEventHeader(EvntHeader);
+  run->SetRunId(1);
+  run->SetSink(new FairRootFileSink(outputFileName));
+  run->ActivateHttpServer(refresh, port);
 
-    // Create source using ucesb for input ------------------
-    R3BUcesbSource* source =
-        new R3BUcesbSource(filename, ntuple_options, ucesb_path, &ucesb_struct, sizeof(ucesb_struct));
-    source->SetMaxEvents(nev); 
-        
+  // Create source using ucesb for input ------------------
+  R3BUcesbSource *source =
+      new R3BUcesbSource(filename, ntuple_options, ucesb_path, &ucesb_struct,
+                         sizeof(ucesb_struct));
+  source->SetMaxEvents(nev);
+
   // Add readers ------------------------------------------
   source->AddReader(new R3BUnpackReader(&ucesb_struct.unpack,
                                         offsetof(EXT_STR_h101, unpack)));
-  auto unpacktrloii = new R3BTrloiiTpatReader(&ucesb_struct.unpacktpat, offsetof(EXT_STR_h101, unpacktpat));
-  //unpacktrloii->SetTrigger(1);
-  //unpacktrloii->SetTpatRange(4,4);
+  auto unpacktrloii = new R3BTrloiiTpatReader(
+      &ucesb_struct.unpacktpat, offsetof(EXT_STR_h101, unpacktpat));
+  // unpacktrloii->SetTrigger(1);
+  // unpacktrloii->SetTpatRange(4,4);
   source->AddReader(unpacktrloii);
 
-  source->AddReader(new R3BWhiterabbitMasterReader((EXT_STR_h101_WRMASTER *)&ucesb_struct.wrmaster,
-                                                                  offsetof(EXT_STR_h101, wrmaster), 0x100));
-        
-    auto unpackfoot = new R3BFootSiReader(&ucesb_struct.foot, offsetof(EXT_STR_h101, foot));
-    //unpackfoot->SetNbDetectors(2);
+  source->AddReader(new R3BWhiterabbitMasterReader(
+      (EXT_STR_h101_WRMASTER *)&ucesb_struct.wrmaster,
+      offsetof(EXT_STR_h101, wrmaster), 0x100));
 
-    // Add readers ------------------------------------------
-    unpackfoot->SetOnline(NOTstoremappeddata);
-    source->AddReader(unpackfoot);
+  auto unpackfoot =
+      new R3BFootSiReader(&ucesb_struct.foot, offsetof(EXT_STR_h101, foot));
+  // unpackfoot->SetNbDetectors(2);
 
-    run->SetSource(source);
+  // Add readers ------------------------------------------
+  unpackfoot->SetOnline(NOTstoremappeddata);
+  source->AddReader(unpackfoot);
 
-    // Runtime data base ------------------------------------
-    FairRuntimeDb* rtdb = run->GetRuntimeDb();
-    
-    if(Cal_level){
+  run->SetSource(source);
+
+  // Runtime data base ------------------------------------
+  FairRuntimeDb *rtdb = run->GetRuntimeDb();
+
+  if (Cal_level) {
     // Load parameters --------------------------------------
     // FOOT mapping
-    FairParAsciiFileIo* parIo1 = new FairParAsciiFileIo(); // Ascii file
+    FairParAsciiFileIo *parIo1 = new FairParAsciiFileIo(); // Ascii file
     parIo1->open(footparfilename, "in");
     rtdb->setFirstInput(parIo1);
     rtdb->print();
-   // rtdb->getContainer("footMappingPar");
-   // rtdb->setInputVersion(1, (char*)"footMapppingPar", 1, 1); 
-   // rtdb->getContainer("footCalPar");
-   // rtdb->setInputVersion(1, (char*)"footCalPar", 1, 1);
+    // rtdb->getContainer("footMappingPar");
+    // rtdb->setInputVersion(1, (char*)"footMapppingPar", 1, 1);
+    // rtdb->getContainer("footCalPar");
+    // rtdb->setInputVersion(1, (char*)"footCalPar", 1, 1);
 
     // Add analysis task ------------------------------------
-    R3BFootMapped2StripCal* Map2Cal = new R3BFootMapped2StripCal();
-    Map2Cal->SetThresholdSigma(10.);
+    R3BFootMapped2StripCal *Map2Cal = new R3BFootMapped2StripCal();
+    Map2Cal->SetThresholdSigma(2.);
     Map2Cal->SetOnline(NOTstorecaldata);
     run->AddTask(Map2Cal);
 
-    R3BFootStripCal2Hit* Cal2Hit = new R3BFootStripCal2Hit();
+    R3BFootStripCal2Hit *Cal2Hit = new R3BFootStripCal2Hit();
     Cal2Hit->SetOnline(NOTstorehitdata);
-    Cal2Hit->SetClusterEnergy(0.);
-    //run->AddTask(Cal2Hit);
-    }
+    Cal2Hit->SetClusterEnergy(60.);
+    run->AddTask(Cal2Hit);
+  }
 
-    // Add online task --------------------------------------
-    R3BFootOnlineSpectra* online = new R3BFootOnlineSpectra();
-    //online->SetTpat(1);
-    online->SetNbDet(2);	
-    //online->SetTrigger(3);
-    run->AddTask(online);
+  // Add online task --------------------------------------
+  R3BFootOnlineSpectra *online = new R3BFootOnlineSpectra();
+  // online->SetTpat(1);
+  online->SetNbDet(2);
+  // online->SetTrigger(3);
+  run->AddTask(online);
 
-    // Initialize -------------------------------------------
-    run->Init();
+  // Initialize -------------------------------------------
+  run->Init();
 
-    // Informations about portnumber and main data stream.
-    cout << "\n\n" << endl;
-    cout << "Data stream is: " << filename << endl;
-    cout << "FOOT online port server: " << port << endl;
-    cout << "\n\n" << endl;
-    //
-    // Run --------------------------------------------------
-    run->Run((nev < 0) ? nev : 0, (nev < 0) ? 0 : nev);
+  // Informations about portnumber and main data stream.
+  cout << "\n\n" << endl;
+  cout << "Data stream is: " << filename << endl;
+  cout << "FOOT online port server: " << port << endl;
+  cout << "\n\n" << endl;
+  //
+  // Run --------------------------------------------------
+  run->Run((nev < 0) ? nev : 0, (nev < 0) ? 0 : nev);
 
-    // Finish -----------------------------------------------
-    timer.Stop();
-    Double_t rtime = timer.RealTime();
-    Double_t ctime = timer.CpuTime();
-    Float_t cpuUsage = ctime / rtime;
-    cout << "CPU used: " << cpuUsage << endl;
-    std::cout << std::endl << std::endl;
-    std::cout << "Macro finished succesfully." << std::endl;
-    std::cout << "Output file is " << outputFileName << std::endl;
-    std::cout << "Real time " << rtime << " s, CPU time " << ctime << " s" << std::endl << std::endl;
-    //gApplication->Terminate();
+  // Finish -----------------------------------------------
+  timer.Stop();
+  Double_t rtime = timer.RealTime();
+  Double_t ctime = timer.CpuTime();
+  Float_t cpuUsage = ctime / rtime;
+  cout << "CPU used: " << cpuUsage << endl;
+  std::cout << std::endl << std::endl;
+  std::cout << "Macro finished succesfully." << std::endl;
+  std::cout << "Output file is " << outputFileName << std::endl;
+  std::cout << "Real time " << rtime << " s, CPU time " << ctime << " s"
+            << std::endl
+            << std::endl;
+  // gApplication->Terminate();
 }
