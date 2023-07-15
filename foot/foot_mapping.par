@@ -1,0 +1,19 @@
+##############################################################################
+# Class:   footMappingPar
+# Context: FootMappingContext
+##############################################################################
+[footMappingPar]
+//----------------------------------------------------------------------------
+footGeoPar:   Int_t 202307
+footDetPar:   Int_t 2
+footDistance2targetPar:   Float_t \
+0 0 
+footAngleThetaPar:   Float_t \
+0 0 
+footAnglePhiPar:   Float_t \
+0 0 
+footOffsetXPar:   Float_t \
+0 0
+footOffsetYPar:   Float_t \
+0 0
+

@@ -24,7 +24,7 @@ void online_foot(const Int_t nev = -1)
     TString outputpath = "./";
     TString outputFileName = outputpath + "foot_analysis_" + oss.str() + ".root";
 
-    Bool_t Cal_level = false;         // set true if there exists a file with the calibration parameters
+    Bool_t Cal_level = true;         // set true if there exists a file with the calibration parameters
     Bool_t NOTstoremappeddata = false; // if true, don't store mapped data in the root file
     Bool_t NOTstorecaldata = false;    // if true, don't store cal data in the root file
     Bool_t NOTstorehitdata = false;    // if true, don't store hit data in the root file
@@ -35,8 +35,7 @@ void online_foot(const Int_t nev = -1)
     TString dir = gSystem->Getenv("VMCWORKDIR");
 
     // FOOT parameter file
-    TString footparfilename = "../../../../foot/footpar_v3.par";
-    //TString footparfilename = "../../../../foot/footpar_v1.par";
+    TString footparfilename = "../../../../foot/foot_CalPar_20230715.par";
     footparfilename.ReplaceAll("//", "/");
 
     //TString ntuple_options = "RAW,time-stitch=1000";
@@ -100,14 +99,14 @@ void online_foot(const Int_t nev = -1)
 
     // Add analysis task ------------------------------------
     R3BFootMapped2StripCal* Map2Cal = new R3BFootMapped2StripCal();
-    Map2Cal->SetThresholdSigma(5.);
+    Map2Cal->SetThresholdSigma(10.);
     Map2Cal->SetOnline(NOTstorecaldata);
     run->AddTask(Map2Cal);
 
     R3BFootStripCal2Hit* Cal2Hit = new R3BFootStripCal2Hit();
     Cal2Hit->SetOnline(NOTstorehitdata);
     Cal2Hit->SetClusterEnergy(0.);
-    run->AddTask(Cal2Hit);
+    //run->AddTask(Cal2Hit);
     }
 
     // Add online task --------------------------------------

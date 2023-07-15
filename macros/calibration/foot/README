@@ -1,0 +1,2 @@
+Example command to write a root file needed for the Foot_Par_maker.C
+~/landexp/202307_juelich/upexps/202307_juelich/202307_juelich stream://krpc003:8003 --ntuple=RAW,FOOT,output.root
