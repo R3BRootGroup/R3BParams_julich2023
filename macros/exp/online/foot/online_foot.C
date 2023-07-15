@@ -2,6 +2,7 @@ typedef struct EXT_STR_h101_t {
   EXT_STR_h101_unpack_t unpack;
   EXT_STR_h101_TPAT_t unpacktpat;
   EXT_STR_h101_WRMASTER_t wrmaster;
+  EXT_STR_h101_ROLU_onion_t rolu;
   EXT_STR_h101_FOOT_onion_t foot;
 } EXT_STR_h101;
 
@@ -22,8 +23,12 @@ void online_foot(const Int_t nev = -1) {
   TString outputpath = "./";
   TString outputFileName = outputpath + "foot_analysis_" + oss.str() + ".root";
 
+
+  const Int_t fRunId = 1;
   Bool_t Cal_level =
       true; // set true if there exists a file with the calibration parameters
+      
+  Bool_t fRolu = true;   // Rolu detector
   Bool_t NOTstoremappeddata =
       false; // if true, don't store mapped data in the root file
   Bool_t NOTstorecaldata =
@@ -33,12 +38,12 @@ void online_foot(const Int_t nev = -1) {
 
   // Online server configuration --------------------------
   Int_t refresh = 10; // Refresh rate for online histograms
-  Int_t port =
-      8886; // Port number for the online visualization, example lxgXXXX:8886
+  Int_t port = 8886; 
   TString dir = gSystem->Getenv("VMCWORKDIR");
 
   // FOOT parameter file
-  TString footparfilename = "../../../../foot/foot_CalPar_20230715_0V.par";
+  TString pardir = dir + "/../R3BParams_julich2023/";
+  TString footparfilename = pardir+"foot/foot_CalPar_20230715_0V.par";
   footparfilename.ReplaceAll("//", "/");
 
   // TString ntuple_options = "RAW,time-stitch=1000";
@@ -78,6 +83,11 @@ void online_foot(const Int_t nev = -1) {
   source->AddReader(new R3BWhiterabbitMasterReader(
       (EXT_STR_h101_WRMASTER *)&ucesb_struct.wrmaster,
       offsetof(EXT_STR_h101, wrmaster), 0x100));
+      
+    auto unpackrolu = new R3BRoluReader((EXT_STR_h101_ROLU_onion*)&ucesb_struct.rolu, offsetof(EXT_STR_h101, rolu));
+    unpackrolu->SetNbDet(1);
+    unpackrolu->SetOnline(NOTstoremappeddata);
+    source->AddReader(unpackrolu);
 
   auto unpackfoot =
       new R3BFootSiReader(&ucesb_struct.foot, offsetof(EXT_STR_h101, foot));
@@ -95,14 +105,40 @@ void online_foot(const Int_t nev = -1) {
   if (Cal_level) {
     // Load parameters --------------------------------------
     // FOOT mapping
-    FairParAsciiFileIo *parIo1 = new FairParAsciiFileIo(); // Ascii file
-    parIo1->open(footparfilename, "in");
-    rtdb->setFirstInput(parIo1);
-    rtdb->print();
-    // rtdb->getContainer("footMappingPar");
-    // rtdb->setInputVersion(1, (char*)"footMapppingPar", 1, 1);
-    // rtdb->getContainer("footCalPar");
-    // rtdb->setInputVersion(1, (char*)"footCalPar", 1, 1);
+    
+      // Root file
+    Bool_t kParameterMerged = kFALSE;
+    auto parIo1 = new FairParRootFileIo(kParameterMerged);
+    TList *parList1 = new TList();
+    
+    if(fRolu){
+     parList1->Add(new TObjString(pardir + "rolu/roluTcalPar_v1.root"));
+     parIo1->open(parList1, "in");
+     rtdb->setFirstInput(parIo1);
+    }
+  
+    FairParAsciiFileIo *parIo2 = new FairParAsciiFileIo(); // Ascii file
+    parIo2->open(footparfilename, "in");
+    if (fRolu){
+      rtdb->setSecondInput(parIo2);
+      rtdb->addRun(fRunId);
+      
+      rtdb->getContainer("RoluTCalPar");
+      rtdb->setInputVersion(fRunId, (char*)"RoluTCalPar", 1, 1);
+    }
+    else
+      rtdb->setFirstInput(parIo2);
+
+      rtdb->print();
+
+    if (fRolu){    
+      auto roluMapped2Cal = new R3BRoluMapped2Cal();
+      roluMapped2Cal->SetNofModules(1,4);
+      roluMapped2Cal->SetTrigger(-1);
+      roluMapped2Cal->SetOnline(NOTstorecaldata);
+      run->AddTask(roluMapped2Cal);
+    }
+    
 
     // Add analysis task ------------------------------------
     R3BFootMapped2StripCal *Map2Cal = new R3BFootMapped2StripCal();
@@ -122,6 +158,16 @@ void online_foot(const Int_t nev = -1) {
   online->SetNbDet(2);
   // online->SetTrigger(3);
   run->AddTask(online);
+  
+  if(fRolu){
+    auto roluOnline = new R3BOnlineSpectraBMON_S494();
+    // -1 = no trigger selection
+    roluOnline->SetTrigger(-1);
+    // if 0, no tpat selection
+    //roluOnline->SetTpat(0,12); 
+    //roluOnline->SetBmon(500,0.1,-9,-6);
+    run->AddTask(roluOnline);
+  }
 
   // Initialize -------------------------------------------
   run->Init();
