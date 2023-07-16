@@ -49,7 +49,8 @@ void online_foot(const Int_t nev = -1) {
   // TString ntuple_options = "RAW,time-stitch=1000";
   TString ntuple_options = "RAW";
   TString ucesb_dir = getenv("UCESB_DIR");
-  TString upexps_dir = ucesb_dir + "/../upexps/";
+  //TString upexps_dir = ucesb_dir + "/../upexps/";
+  TString upexps_dir ="/LynxOS/mbsusr/mbsdaq/landexp/202307_juelich/upexps/";
   TString ucesb_path;
   ucesb_path = upexps_dir + "/202307_juelich/202307_juelich --allow-errors";
   ucesb_path.ReplaceAll("//", "/");
