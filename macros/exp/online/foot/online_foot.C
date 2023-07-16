@@ -19,7 +19,8 @@ void online_foot(const Int_t nev = -1) {
   oss << std::put_time(&tm, "%Y%m%d_%H%M%S");
 
   // TString filename = "--stream=krpc003:9003";
-  TString filename = "~/lmd/julich2023/run003.lmd";
+  TString filename = "--stream=frs074:9003";
+  //TString filename = "~/lmd/julich2023/run003.lmd";
   TString outputpath = "./";
   TString outputFileName = outputpath + "foot_analysis_" + oss.str() + ".root";
 
