@@ -18,26 +18,22 @@ void online_foot(const Int_t nev = -1) {
   //std::ostringstream oss;
   //oss << std::put_time(&tm, "%Y%m%d_%H%M%S");
 
-  // TString filename = "--stream=krpc003:9003";
-  TString filename = "--stream=frs074:9003";
-  //TString filename = "~/lmd/julich2023/run003.lmd";
+  TString filename = "--stream=frspc074";
+  // TString filename = "--stream=frspc074:9001";//stitched
+  // TString filename = "~/lmd/julich2023/run003.lmd";
   TString outputpath = "./";
   TString outputFileName = outputpath + "foot_analysis_today.root";
 
   const Int_t fRunId = 1;
-  Bool_t Cal_level =
-      true; // set true if there exists a file with the calibration parameters
+  Bool_t Cal_level = true; // set true if there exists a file with the calibration parameters
 
   Bool_t fRolu = true; // Rolu detector
-  Bool_t NOTstoremappeddata =
-      false; // if true, don't store mapped data in the root file
-  Bool_t NOTstorecaldata =
-      false; // if true, don't store cal data in the root file
-  Bool_t NOTstorehitdata =
-      false; // if true, don't store hit data in the root file
+  Bool_t NOTstoremappeddata = true; // if true, don't store mapped data in the root file
+  Bool_t NOTstorecaldata = true; // if true, don't store cal data in the root file
+  Bool_t NOTstorehitdata = true; // if true, don't store hit data in the root file
 
   // Online server configuration --------------------------
-  Int_t refresh = 10; // Refresh rate for online histograms
+  Int_t refresh = 5; // Refresh rate for online histograms
   Int_t port = 8886;
   TString dir = gSystem->Getenv("VMCWORKDIR");
 
@@ -50,7 +46,7 @@ void online_foot(const Int_t nev = -1) {
   TString ntuple_options = "RAW";
   TString ucesb_dir = getenv("UCESB_DIR");
   //TString upexps_dir = ucesb_dir + "/../upexps/";
-  TString upexps_dir ="/LynxOS/mbsusr/mbsdaq/landexp/202307_juelich/upexps/";
+  TString upexps_dir ="/home/frsuser/202307_juelich/upexps/";
   TString ucesb_path;
   ucesb_path = upexps_dir + "/202307_juelich/202307_juelich --allow-errors";
   ucesb_path.ReplaceAll("//", "/");
@@ -94,7 +90,6 @@ void online_foot(const Int_t nev = -1) {
 
   auto unpackfoot =
       new R3BFootSiReader(&ucesb_struct.foot, offsetof(EXT_STR_h101, foot));
-  // unpackfoot->SetNbDetectors(2);
 
   // Add readers ------------------------------------------
   unpackfoot->SetOnline(NOTstoremappeddata);
@@ -132,6 +127,17 @@ void online_foot(const Int_t nev = -1) {
       rtdb->setFirstInput(parIo2);
 
     rtdb->print();
+    
+    // Add analysis task ------------------------------------
+    R3BFootMapped2StripCal *Map2Cal = new R3BFootMapped2StripCal();
+    Map2Cal->SetThresholdSigma(3.);
+    Map2Cal->SetOnline(NOTstorecaldata);
+    run->AddTask(Map2Cal);
+
+    R3BFootStripCal2Hit *Cal2Hit = new R3BFootStripCal2Hit();
+    Cal2Hit->SetOnline(NOTstorehitdata);
+    Cal2Hit->SetClusterEnergy(60.);
+    run->AddTask(Cal2Hit);
 
     if (fRolu) {
       auto roluMapped2Cal = new R3BRoluMapped2Cal();
@@ -140,21 +146,10 @@ void online_foot(const Int_t nev = -1) {
       roluMapped2Cal->SetOnline(NOTstorecaldata);
       run->AddTask(roluMapped2Cal);
 
-      R3BRoluCal2Hit *roluCal2Hit = new R3BRoluCal2Hit("RoluCal2Hit", 1);
-      roluCal2Hit->SetNofModules(1, 4);
-      run->AddTask(roluCal2Hit);
+      //R3BRoluCal2Hit *roluCal2Hit = new R3BRoluCal2Hit("RoluCal2Hit", 1);
+      //roluCal2Hit->SetNofModules(1, 4);
+      //run->AddTask(roluCal2Hit);
     }
-
-    // Add analysis task ------------------------------------
-    R3BFootMapped2StripCal *Map2Cal = new R3BFootMapped2StripCal();
-    Map2Cal->SetThresholdSigma(2.);
-    Map2Cal->SetOnline(NOTstorecaldata);
-    run->AddTask(Map2Cal);
-
-    R3BFootStripCal2Hit *Cal2Hit = new R3BFootStripCal2Hit();
-    Cal2Hit->SetOnline(NOTstorehitdata);
-    Cal2Hit->SetClusterEnergy(60.);
-    run->AddTask(Cal2Hit);
   }
 
   // Add online task --------------------------------------
@@ -170,7 +165,8 @@ void online_foot(const Int_t nev = -1) {
     roluOnline->SetTrigger(-1);
     // if 0, no tpat selection
     roluOnline->SetTpat(0, 0);
-    // roluOnline->SetBmon(500,0.1,-9,-6);
+    // Set calibration parameters for positions in mm
+    roluOnline->SetSciCalParameters(0.,1.,0.,1.);
     run->AddTask(roluOnline);
   }
 
