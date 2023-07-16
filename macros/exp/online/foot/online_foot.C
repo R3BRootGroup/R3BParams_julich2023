@@ -13,16 +13,16 @@ void online_foot(const Int_t nev = -1) {
   FairLogger::GetLogger()->SetLogScreenLevel("info");
   FairLogger::GetLogger()->SetColoredLog(true);
 
-  auto t = std::time(nullptr);
-  auto tm = *std::localtime(&t);
-  std::ostringstream oss;
-  oss << std::put_time(&tm, "%Y%m%d_%H%M%S");
+  //auto t = std::time(nullptr);
+  //auto tm = *std::localtime(&t);
+  //std::ostringstream oss;
+  //oss << std::put_time(&tm, "%Y%m%d_%H%M%S");
 
   // TString filename = "--stream=krpc003:9003";
   TString filename = "--stream=frs074:9003";
   //TString filename = "~/lmd/julich2023/run003.lmd";
   TString outputpath = "./";
-  TString outputFileName = outputpath + "foot_analysis_" + oss.str() + ".root";
+  TString outputFileName = outputpath + "foot_analysis_today.root";
 
   const Int_t fRunId = 1;
   Bool_t Cal_level =
