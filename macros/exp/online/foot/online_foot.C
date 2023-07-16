@@ -79,7 +79,7 @@ void online_foot(const Int_t nev = -1) {
 
   source->AddReader(new R3BWhiterabbitMasterReader(
       (EXT_STR_h101_WRMASTER *)&ucesb_struct.wrmaster,
-      offsetof(EXT_STR_h101, wrmaster), 0x1000));
+      offsetof(EXT_STR_h101, wrmaster), 0x100));
 
   auto unpackrolu =
       new R3BRoluReader((EXT_STR_h101_ROLU_onion *)&ucesb_struct.rolu,
