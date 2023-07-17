@@ -141,7 +141,7 @@ void online_alpide(const Int_t nev = -1) {
     TList *parList2 = new TList();
     parList2->Add(new TObjString(footparfilename));
     parList2->Add(new TObjString(alpideparfilename));
-    parIo2->open(parList2, "in");
+    parIo2->open(parList2);
 
     if (fRolu) {
       rtdb->setSecondInput(parIo2);
