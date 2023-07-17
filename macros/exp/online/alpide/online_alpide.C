@@ -53,7 +53,8 @@ void online_alpide(const Int_t nev = -1) {
 
   // FOOT parameter file
   TString pardir = dir + "/../R3BParams_julich2023/";
-  TString footparfilename = pardir + "foot/foot_CalPar_20230715_0V.par";
+  TString footparfilename = pardir + "foot/foot_CalPar_20230715_50V_NoBadStrips.par";
+  TString alpideparfilename = pardir + "alpide/alpide_mapping.par";
   footparfilename.ReplaceAll("//", "/");
 
   // TString ntuple_options = "RAW,time-stitch=1000";
@@ -139,7 +140,7 @@ void online_alpide(const Int_t nev = -1) {
     FairParAsciiFileIo *parIo2 = new FairParAsciiFileIo(); // Ascii file
     TList *parList2 = new TList();
     parList2->Add(new TObjString(footparfilename));
-    parList2->Add(new TObjString(pardir + "alpide/alpide_mapping.par"));
+    parList2->Add(new TObjString(alpideparfilename));
     parIo2->open(parList2, "in");
 
     if (fRolu) {
