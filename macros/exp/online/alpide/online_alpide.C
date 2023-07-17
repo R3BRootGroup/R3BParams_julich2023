@@ -27,8 +27,8 @@ void online_alpide(const Int_t nev = -1) {
   // std::ostringstream oss;
   // oss << std::put_time(&tm, "%Y%m%d_%H%M%S");
 
-  TString filename = "--stream=frspc074";
-  // TString filename = "--stream=frspc074:9001";//stitched
+  //TString filename = "--stream=frspc074";
+  TString filename = "--stream=frspc074:9100";//stitched
   // TString filename = "~/lmd/julich2023/run003.lmd";
   TString outputpath = "./";
   TString outputFileName = outputpath + "sfa_analysis_today.root";
@@ -57,12 +57,12 @@ void online_alpide(const Int_t nev = -1) {
   footparfilename.ReplaceAll("//", "/");
 
   // TString ntuple_options = "RAW,time-stitch=1000";
-  TString ntuple_options = "RAW,time-stitch=3000";
+  TString ntuple_options = "RAW";
   TString ucesb_dir = getenv("UCESB_DIR");
   // TString upexps_dir = ucesb_dir + "/../upexps/";
   TString upexps_dir = "/home/frsuser/202307_juelich/upexps/";
   TString ucesb_path;
-  ucesb_path = upexps_dir + "/202307_juelich/202307_juelich --allow-errors";
+  ucesb_path = upexps_dir + "/202307_juelich_alpide/202307_juelich --allow-errors";
   ucesb_path.ReplaceAll("//", "/");
 
   // Load ucesb structure ---------------------------------
